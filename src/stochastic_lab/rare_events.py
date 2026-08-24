@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-from math import exp, pi, sqrt
+from math import sqrt
 
 import numpy as np
-
-
-def _normal_pdf(x: np.ndarray, mean: float = 0.0) -> np.ndarray:
-    """Standard-deviation-one normal density evaluated at x."""
-    return np.exp(-0.5 * (x - mean) ** 2) / sqrt(2.0 * pi)
 
 
 def normal_tail_probability_mc(
