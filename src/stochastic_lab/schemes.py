@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+
 import numpy as np
 
 Drift = Callable[[float, float], float]
@@ -30,7 +31,11 @@ def euler_maruyama(
         t = time[i]
         for p in range(paths):
             xp = x[p, i]
-            x[p, i + 1] = xp + drift(t, xp) * dt + diffusion(t, xp) * np.sqrt(dt) * z[p, i]
+            x[p, i + 1] = (
+                xp
+                + drift(t, xp) * dt
+                + diffusion(t, xp) * np.sqrt(dt) * z[p, i]
+            )
     return time, x
 
 
