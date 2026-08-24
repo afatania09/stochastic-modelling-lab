@@ -20,6 +20,12 @@ from .processes import (
     ornstein_uhlenbeck,
     poisson_process,
 )
+from .qmc import qmc_integrate, sobol_normal, sobol_uniform
+from .rare_events import (
+    lognormal_loss_exceedance_importance_sampling,
+    normal_tail_probability_importance_sampling,
+    normal_tail_probability_mc,
+)
 from .schemes import euler_maruyama, milstein
 
 __all__ = [
@@ -34,10 +40,16 @@ __all__ = [
     "gbm_strong_errors",
     "gbm_weak_errors",
     "geometric_brownian_motion",
+    "lognormal_loss_exceedance_importance_sampling",
     "merton_jump_diffusion",
     "milstein",
+    "normal_tail_probability_importance_sampling",
+    "normal_tail_probability_mc",
     "ornstein_uhlenbeck",
     "plain_monte_carlo",
     "poisson_process",
+    "qmc_integrate",
     "running_mean_standard_error",
+    "sobol_normal",
+    "sobol_uniform",
 ]
