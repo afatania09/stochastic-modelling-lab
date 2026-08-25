@@ -30,6 +30,9 @@ This repository is designed as a rigorous, reusable and testable stochastic-mode
 - Antithetic normal variates
 - Optimal linear control variates
 - Running mean and standard-error convergence diagnostics
+- Importance sampling for rare Gaussian and lognormal tail events
+- Sobol low-discrepancy sequences
+- Randomised quasi-Monte Carlo integration with replication-based error estimates
 
 ### Validation philosophy
 
@@ -44,6 +47,10 @@ Simulation output is checked against known theoretical properties wherever possi
 - Merton jump-diffusion expected growth under the compensator
 - Milstein's stronger pathwise convergence behaviour relative to Euler on GBM
 - control-variate variance reduction
+- importance-sampling agreement with the analytical Gaussian tail
+- material standard-error reduction for a rare-event estimator
+- Sobol point bounds and transformed-normal moments
+- quasi-Monte Carlo integration against an analytical polynomial integral
 - reproducibility of numerical SDE schemes
 
 The aim is therefore not just to produce simulated paths, but to demonstrate whether an implementation behaves consistently with its mathematical specification.
@@ -90,6 +97,14 @@ dS(t)/S(t-) = (mu - lambda*kappa)dt + sigma dW(t) + (J-1)dN(t),
 
 where `N(t)` is Poisson and `kappa = E[J-1]` compensates the jump drift.
 
+For a rare Gaussian event `P[Z > a]`, importance sampling draws under a shifted law and applies the likelihood ratio
+
+```text
+L(x) = exp(-theta*x + 0.5*theta^2).
+```
+
+For quasi-Monte Carlo, low-discrepancy Sobol points replace independent uniforms; randomised scrambles permit repeated estimates and a practical standard-error calculation.
+
 ## Installation
 
 ```bash
@@ -131,22 +146,30 @@ h, errors, order = gbm_strong_errors(
 print(order)
 ```
 
-Generate a jump-diffusion ensemble:
+Estimate a rare 4-sigma event:
 
 ```python
-from stochastic_lab import merton_jump_diffusion
+from stochastic_lab import normal_tail_probability_importance_sampling
 
-_, paths = merton_jump_diffusion(
-    s0=100,
-    mu=0.05,
-    sigma=0.20,
-    jump_intensity=0.8,
-    jump_mean=-0.08,
-    jump_std=0.18,
-    horizon=1,
-    steps=252,
-    paths=10_000,
-    seed=7,
+estimate, se = normal_tail_probability_importance_sampling(
+    threshold=4.0,
+    simulations=200_000,
+    seed=1,
+)
+print(estimate, se)
+```
+
+Randomised quasi-Monte Carlo integration:
+
+```python
+from stochastic_lab import qmc_integrate
+
+estimate, se = qmc_integrate(
+    lambda u: u[:, 0] ** 2 + u[:, 1] ** 2,
+    dimension=2,
+    power=10,
+    replications=8,
+    seed=123,
 )
 ```
 
@@ -159,6 +182,8 @@ src/stochastic_lab/
     convergence.py        strong/weak error and convergence diagnostics
     jumps.py              compound Poisson and Merton jump diffusion
     monte_carlo.py        estimators and variance reduction
+    rare_events.py        importance sampling and tail-event estimation
+    qmc.py                Sobol low-discrepancy and randomised QMC tools
 tests/                    statistical and numerical verification
 .github/workflows/        automated CI across supported Python versions
 ```
@@ -168,9 +193,9 @@ tests/                    statistical and numerical verification
 1. **Foundations** — Brownian motion, GBM, OU, CIR and Poisson processes. ✅
 2. **Numerical SDE analysis** — Euler-Maruyama, Milstein, strong and weak convergence. ✅
 3. **Jump processes** — compound Poisson and Merton jump diffusion. ✅
-4. **Variance reduction** — antithetic variates and control variates. ✅ Core implemented
-5. **Importance sampling** — rare-event estimators and likelihood-ratio diagnostics.
-6. **Quasi-Monte Carlo** — Sobol sequences and convergence comparison.
+4. **Variance reduction** — antithetic variates and control variates. ✅
+5. **Importance sampling** — rare-event estimators and likelihood-ratio diagnostics. ✅ Core implemented
+6. **Quasi-Monte Carlo** — Sobol sequences and randomised QMC integration. ✅ Core implemented
 7. **Parameter estimation** — MLE, moment estimators and calibration diagnostics.
 8. **Stochastic volatility** — Heston simulation and discretisation comparisons.
 9. **Regime switching** — Markov switching processes and hidden-state inference.
