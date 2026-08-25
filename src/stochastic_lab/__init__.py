@@ -8,7 +8,9 @@ from .convergence import (
     gbm_weak_errors,
 )
 from .estimation import estimate_gbm_mle, estimate_ou_ols, estimation_error
+from .factor_models import covariance_explained, pca_factor_decomposition, reconstruct_from_factors
 from .heston import heston_feller_margin, heston_paths, realised_variance
+from .heston_pricing import heston_calibration_rmse, heston_european_call_mc, heston_price_surface_mc
 from .jumps import compound_poisson_process, merton_jump_diffusion
 from .monte_carlo import (
     antithetic_normal_samples,
@@ -16,6 +18,7 @@ from .monte_carlo import (
     plain_monte_carlo,
     running_mean_standard_error,
 )
+from .multivariate import correlated_brownian_motion, correlated_gbm, validate_correlation_matrix
 from .pricing import black_scholes_call, european_call_mc, european_call_mc_control_variate
 from .processes import (
     brownian_motion,
@@ -38,6 +41,12 @@ from .regime_switching import (
 )
 from .risk import drawdown, expected_shortfall, maximum_drawdown, value_at_risk
 from .schemes import euler_maruyama, milstein
+from .term_structure import (
+    vasicek_paths,
+    vasicek_yield_curve,
+    vasicek_zero_coupon_bond_price,
+    zero_coupon_yield,
+)
 
 __all__ = [
     "antithetic_normal_samples",
@@ -46,6 +55,9 @@ __all__ = [
     "cir_process",
     "compound_poisson_process",
     "control_variate_estimate",
+    "correlated_brownian_motion",
+    "correlated_gbm",
+    "covariance_explained",
     "drawdown",
     "estimate_gbm_mle",
     "estimate_loglog_slope",
@@ -59,8 +71,11 @@ __all__ = [
     "gbm_strong_errors",
     "gbm_weak_errors",
     "geometric_brownian_motion",
+    "heston_calibration_rmse",
+    "heston_european_call_mc",
     "heston_feller_margin",
     "heston_paths",
+    "heston_price_surface_mc",
     "lognormal_loss_exceedance_importance_sampling",
     "markov_switching_returns",
     "maximum_drawdown",
@@ -70,17 +85,24 @@ __all__ = [
     "normal_tail_probability_mc",
     "ornstein_uhlenbeck",
     "parameter_bounds_check",
+    "pca_factor_decomposition",
     "plain_monte_carlo",
     "poisson_process",
     "qmc_integrate",
     "realised_variance",
+    "reconstruct_from_factors",
     "relative_rmse",
     "running_mean_standard_error",
     "simulate_markov_chain",
     "sobol_normal",
     "sobol_uniform",
     "stationary_distribution",
+    "validate_correlation_matrix",
     "validate_transition_matrix",
     "value_at_risk",
+    "vasicek_paths",
+    "vasicek_yield_curve",
+    "vasicek_zero_coupon_bond_price",
     "weighted_rmse",
+    "zero_coupon_yield",
 ]
