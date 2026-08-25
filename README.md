@@ -2,9 +2,9 @@
 
 [![Tests](https://github.com/afatania09/stochastic-modelling-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/afatania09/stochastic-modelling-lab/actions/workflows/tests.yml)
 
-**A computational laboratory for stochastic processes, SDE simulation, Monte Carlo methods and quantitative finance.**
+**A computational laboratory for stochastic processes, SDE simulation, Monte Carlo methods, parameter estimation and quantitative finance.**
 
-This repository is designed as a rigorous, reusable and testable stochastic-modelling project rather than a collection of notebooks. The emphasis is on linking mathematical theory to simulation, numerical approximation, convergence analysis and empirical diagnostics.
+This repository is designed as a rigorous, reusable and testable stochastic-modelling project rather than a collection of notebooks. The emphasis is on linking mathematical theory to simulation, numerical approximation, convergence analysis, estimation and empirical diagnostics.
 
 ## Current capabilities
 
@@ -16,6 +16,8 @@ This repository is designed as a rigorous, reusable and testable stochastic-mode
 - Homogeneous Poisson counting process
 - Compound Poisson processes with Gaussian jump sizes
 - Merton jump diffusion with drift compensation
+- Heston stochastic volatility with correlated shocks
+- Finite-state Markov regime switching
 
 ### Numerical SDE methods
 - Euler-Maruyama
@@ -23,6 +25,7 @@ This repository is designed as a rigorous, reusable and testable stochastic-mode
 - Pathwise strong-error analysis against exact GBM
 - Weak-error analysis against analytical GBM moments
 - Log-log convergence-order estimation
+- Full-truncation treatment for square-root variance processes
 - Reproducible seeded simulation
 
 ### Monte Carlo methods
@@ -34,7 +37,35 @@ This repository is designed as a rigorous, reusable and testable stochastic-mode
 - Sobol low-discrepancy sequences
 - Randomised quasi-Monte Carlo integration with replication-based error estimates
 
-### Validation philosophy
+### Parameter estimation and calibration
+- GBM maximum-likelihood estimation from log returns
+- OU estimation using its exact AR(1) transition representation
+- Parameter recovery diagnostics
+- Weighted RMSE calibration loss
+- Relative RMSE
+- Parameter-bound validation
+
+### Stochastic volatility
+The Heston simulator implements
+
+```text
+dS(t) = mu S(t) dt + sqrt(v(t)) S(t) dW1(t)
+dv(t) = kappa(theta-v(t))dt + xi sqrt(v(t)) dW2(t)
+corr(dW1,dW2) = rho
+```
+
+using full-truncation Euler for the variance process and log-Euler evolution for prices. The package also exposes the Feller margin
+
+```text
+2*kappa*theta - xi^2
+```
+
+so parameter sets can be checked explicitly rather than treated as black boxes.
+
+### Regime switching
+Finite-state Markov chains can be simulated from a row-stochastic transition matrix. The package computes stationary distributions and supports Gaussian returns whose conditional mean and volatility depend on the latent regime. This makes it possible to model calm/stress states and study persistence, long-run regime occupancy and volatility mixtures.
+
+## Validation philosophy
 
 Simulation output is checked against known theoretical properties wherever possible. The test suite verifies, among other things:
 
@@ -51,6 +82,14 @@ Simulation output is checked against known theoretical properties wherever possi
 - material standard-error reduction for a rare-event estimator
 - Sobol point bounds and transformed-normal moments
 - quasi-Monte Carlo integration against an analytical polynomial integral
+- GBM parameter recovery from simulated data
+- OU parameter-estimation sanity checks
+- Heston price positivity and non-negative variance paths
+- Feller-condition diagnostics
+- Markov-chain stationary-distribution consistency
+- long-run regime frequencies versus stationary probabilities
+- regime-dependent volatility separation
+- calibration-loss behaviour
 - reproducibility of numerical SDE schemes
 
 The aim is therefore not just to produce simulated paths, but to demonstrate whether an implementation behaves consistently with its mathematical specification.
@@ -105,6 +144,14 @@ L(x) = exp(-theta*x + 0.5*theta^2).
 
 For quasi-Monte Carlo, low-discrepancy Sobol points replace independent uniforms; randomised scrambles permit repeated estimates and a practical standard-error calculation.
 
+For an OU process sampled every `dt`, the exact transition can be written as an AR(1) model with
+
+```text
+phi = exp(-kappa*dt),
+```
+
+which permits transparent estimation of mean reversion, long-run mean and diffusion scale.
+
 ## Installation
 
 ```bash
@@ -117,7 +164,7 @@ pytest
 
 ## Examples
 
-Simulate GBM:
+### Simulate GBM
 
 ```python
 from stochastic_lab import geometric_brownian_motion
@@ -133,7 +180,7 @@ _, paths = geometric_brownian_motion(
 )
 ```
 
-Estimate numerical strong convergence:
+### Estimate numerical strong convergence
 
 ```python
 from stochastic_lab import gbm_strong_errors
@@ -146,7 +193,7 @@ h, errors, order = gbm_strong_errors(
 print(order)
 ```
 
-Estimate a rare 4-sigma event:
+### Estimate a rare 4-sigma event
 
 ```python
 from stochastic_lab import normal_tail_probability_importance_sampling
@@ -159,7 +206,7 @@ estimate, se = normal_tail_probability_importance_sampling(
 print(estimate, se)
 ```
 
-Randomised quasi-Monte Carlo integration:
+### Randomised quasi-Monte Carlo integration
 
 ```python
 from stochastic_lab import qmc_integrate
@@ -173,6 +220,46 @@ estimate, se = qmc_integrate(
 )
 ```
 
+### Simulate Heston stochastic volatility
+
+```python
+from stochastic_lab import heston_paths
+
+_, prices, variances = heston_paths(
+    s0=100.0,
+    v0=0.04,
+    mu=0.05,
+    kappa=2.0,
+    theta=0.04,
+    xi=0.30,
+    rho=-0.7,
+    horizon=1.0,
+    steps=252,
+    paths=10_000,
+    seed=7,
+)
+```
+
+### Model calm and stress regimes
+
+```python
+import numpy as np
+from stochastic_lab import markov_switching_returns, stationary_distribution
+
+transition = np.array([[0.97, 0.03], [0.10, 0.90]])
+print(stationary_distribution(transition))
+
+states, returns = markov_switching_returns(
+    transition,
+    means=np.array([0.0004, -0.0008]),
+    volatilities=np.array([0.008, 0.03]),
+    steps=5_000,
+    seed=42,
+)
+```
+
+A runnable end-to-end demonstration is available at `experiments/advanced_models_demo.py`.
+
 ## Repository structure
 
 ```text
@@ -184,6 +271,11 @@ src/stochastic_lab/
     monte_carlo.py        estimators and variance reduction
     rare_events.py        importance sampling and tail-event estimation
     qmc.py                Sobol low-discrepancy and randomised QMC tools
+    estimation.py         GBM and OU parameter estimation
+    calibration.py        fit metrics and parameter diagnostics
+    heston.py             stochastic-volatility simulation
+    regime_switching.py   latent Markov regimes and switching returns
+experiments/              reproducible research-style demonstrations
 tests/                    statistical and numerical verification
 .github/workflows/        automated CI across supported Python versions
 ```
@@ -194,13 +286,13 @@ tests/                    statistical and numerical verification
 2. **Numerical SDE analysis** — Euler-Maruyama, Milstein, strong and weak convergence. ✅
 3. **Jump processes** — compound Poisson and Merton jump diffusion. ✅
 4. **Variance reduction** — antithetic variates and control variates. ✅
-5. **Importance sampling** — rare-event estimators and likelihood-ratio diagnostics. ✅ Core implemented
-6. **Quasi-Monte Carlo** — Sobol sequences and randomised QMC integration. ✅ Core implemented
-7. **Parameter estimation** — MLE, moment estimators and calibration diagnostics.
-8. **Stochastic volatility** — Heston simulation and discretisation comparisons.
-9. **Regime switching** — Markov switching processes and hidden-state inference.
-10. **Applications** — derivative pricing, risk simulation and term-structure modelling.
-11. **Research experiments** — reproducible comparisons of simulation bias, convergence and model behaviour.
+5. **Importance sampling** — rare-event estimators and likelihood-ratio diagnostics. ✅
+6. **Quasi-Monte Carlo** — Sobol sequences and randomised QMC integration. ✅
+7. **Parameter estimation** — GBM MLE, OU transition estimation and calibration diagnostics. ✅ Core implemented
+8. **Stochastic volatility** — Heston simulation, Feller diagnostics and variance-path analysis. ✅ Core implemented
+9. **Regime switching** — Markov switching processes, stationary distributions and state-dependent returns. ✅ Core implemented
+10. **Applications** — derivative pricing, risk simulation and term-structure modelling. Next
+11. **Research experiments** — reproducible comparisons of simulation bias, convergence, estimation error and model behaviour. In progress
 
 ## Design principles
 
@@ -209,6 +301,7 @@ tests/                    statistical and numerical verification
 - reusable library code rather than notebook-only implementations;
 - theory-versus-simulation validation;
 - convergence analysis rather than visual inspection alone;
+- explicit estimation and calibration diagnostics;
 - tests for numerical and statistical behaviour;
 - documented approximations and limitations.
 
