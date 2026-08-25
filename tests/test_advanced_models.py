@@ -20,7 +20,16 @@ def test_gbm_mle_recovers_parameters_reasonably():
 
 def test_ou_estimator_recovers_mean_reversion():
     kappa, theta, sigma = 1.4, 0.03, 0.18
-    _, paths = ornstein_uhlenbeck(0.4, kappa, theta, sigma, 20.0, 10_000, 1, 77)
+    _, paths = ornstein_uhlenbeck(
+        x0=0.4,
+        theta=theta,
+        kappa=kappa,
+        sigma=sigma,
+        horizon=20.0,
+        steps=10_000,
+        paths=1,
+        seed=77,
+    )
     estimate = estimate_ou_ols(paths[0], 20.0 / 10_000.0)
     assert abs(estimate["theta"] - theta) < 0.08
     assert estimate["kappa"] > 0
