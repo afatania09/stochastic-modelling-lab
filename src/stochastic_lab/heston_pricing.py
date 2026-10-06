@@ -62,7 +62,7 @@ def heston_price_surface_mc(
         raise ValueError("strikes and maturities must be positive one-dimensional arrays")
     surface = np.empty((len(t), len(k)), dtype=float)
     for i, maturity in enumerate(t):
-        steps = max(1, int(round(steps_per_year * float(maturity))))
+        steps = max(1, round(steps_per_year * float(maturity)))
         _, simulated, _ = heston_paths(
             s0, v0, rate, kappa, theta, xi, rho, float(maturity), steps, paths, seed + i
         )
