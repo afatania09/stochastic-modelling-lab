@@ -51,6 +51,38 @@ def vasicek_zero_coupon_bond_price(
     return np.exp(log_a - b * r)
 
 
+def cir_zero_coupon_bond_price(
+    short_rate: float | np.ndarray,
+    maturity: float,
+    kappa: float,
+    theta: float,
+    sigma: float,
+) -> np.ndarray:
+    """Analytical CIR zero-coupon bond price under risk-neutral dynamics."""
+    if maturity < 0 or kappa <= 0 or theta < 0 or sigma < 0:
+        raise ValueError("maturity, theta and sigma must be non-negative; kappa positive")
+    r = np.asarray(short_rate, dtype=float)
+    if np.any(r < 0):
+        raise ValueError("CIR short rates must be non-negative")
+    if maturity == 0:
+        return np.ones_like(r)
+
+    if sigma == 0:
+        integrated_rate = (
+            theta * maturity
+            + (r - theta) * (1.0 - np.exp(-kappa * maturity)) / kappa
+        )
+        return np.exp(-integrated_rate)
+
+    gamma = np.sqrt(kappa**2 + 2.0 * sigma**2)
+    exp_gamma_t = np.exp(gamma * maturity)
+    denominator = (gamma + kappa) * (exp_gamma_t - 1.0) + 2.0 * gamma
+    b = 2.0 * (exp_gamma_t - 1.0) / denominator
+    a_base = 2.0 * gamma * np.exp((kappa + gamma) * maturity / 2.0) / denominator
+    a = a_base ** (2.0 * kappa * theta / sigma**2)
+    return a * np.exp(-b * r)
+
+
 def zero_coupon_yield(price: float | np.ndarray, maturity: float) -> np.ndarray:
     """Continuously compounded yield implied by a zero-coupon bond price."""
     if maturity <= 0:
@@ -74,6 +106,24 @@ def vasicek_yield_curve(
         raise ValueError("maturities must be a one-dimensional positive array")
     prices = np.array([
         vasicek_zero_coupon_bond_price(short_rate, float(t), kappa, theta, sigma)
+        for t in mats
+    ])
+    return -np.log(prices.astype(float)) / mats
+
+
+def cir_yield_curve(
+    short_rate: float,
+    maturities: np.ndarray,
+    kappa: float,
+    theta: float,
+    sigma: float,
+) -> np.ndarray:
+    """Evaluate the analytical CIR zero-coupon yield curve."""
+    mats = np.asarray(maturities, dtype=float)
+    if mats.ndim != 1 or np.any(mats <= 0):
+        raise ValueError("maturities must be a one-dimensional positive array")
+    prices = np.array([
+        cir_zero_coupon_bond_price(short_rate, float(t), kappa, theta, sigma)
         for t in mats
     ])
     return -np.log(prices.astype(float)) / mats
