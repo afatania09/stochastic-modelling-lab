@@ -2,155 +2,150 @@
 
 [![Tests](https://github.com/afatania09/stochastic-modelling-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/afatania09/stochastic-modelling-lab/actions/workflows/tests.yml)
 
-**A computational laboratory for stochastic processes, SDE simulation, Monte Carlo methods, parameter estimation and quantitative finance.**
+**A computational laboratory for stochastic processes, numerical SDEs, Monte Carlo methods, stochastic volatility, factor models, term-structure modelling and quantitative finance.**
 
-This repository is designed as a rigorous, reusable and testable stochastic-modelling project rather than a collection of notebooks. The emphasis is on linking mathematical theory to simulation, numerical approximation, convergence analysis, estimation and empirical diagnostics.
+This repository is built as a reusable, testable stochastic-modelling library rather than a notebook collection. The core principle is simple: every model should connect mathematical specification, simulation or estimation, and numerical validation.
 
-## Current capabilities
+## Capability map
 
-### Stochastic processes
-- Standard Brownian motion
-- Geometric Brownian motion using exact simulation
-- Ornstein-Uhlenbeck mean reversion using exact discretisation
-- Cox-Ingersoll-Ross square-root process using full-truncation Euler
-- Homogeneous Poisson counting process
-- Compound Poisson processes with Gaussian jump sizes
-- Merton jump diffusion with drift compensation
-- Heston stochastic volatility with correlated shocks
-- Finite-state Markov regime switching
+### Core stochastic processes
+- Brownian motion
+- correlated Brownian motion
+- geometric Brownian motion
+- correlated multi-asset GBM
+- Ornstein-Uhlenbeck mean reversion
+- CIR square-root diffusion
+- Poisson and compound-Poisson processes
+- Merton jump diffusion
+- Heston stochastic volatility
+- finite-state Markov regime switching
+- Vasicek short-rate dynamics
 
 ### Numerical SDE methods
 - Euler-Maruyama
 - Milstein
-- Pathwise strong-error analysis against exact GBM
-- Weak-error analysis against analytical GBM moments
-- Log-log convergence-order estimation
-- Full-truncation treatment for square-root variance processes
-- Reproducible seeded simulation
+- strong and weak convergence diagnostics
+- pathwise GBM comparison against exact solutions
+- log-log convergence-order estimation
+- full-truncation schemes for non-negative variance processes
 
-### Monte Carlo methods
-- Plain Monte Carlo estimation with standard errors
-- Antithetic normal variates
-- Optimal linear control variates
-- Running mean and standard-error convergence diagnostics
-- Importance sampling for rare Gaussian and lognormal tail events
+### Monte Carlo and variance reduction
+- plain Monte Carlo estimators with standard errors
+- antithetic variates
+- optimal linear control variates
+- running convergence diagnostics
+- importance sampling for rare events
 - Sobol low-discrepancy sequences
-- Randomised quasi-Monte Carlo integration with replication-based error estimates
+- randomised quasi-Monte Carlo
 
-### Parameter estimation and calibration
-- GBM maximum-likelihood estimation from log returns
-- OU estimation using its exact AR(1) transition representation
-- Parameter recovery diagnostics
-- Weighted RMSE calibration loss
-- Relative RMSE
-- Parameter-bound validation
+### Estimation and calibration
+- GBM maximum-likelihood estimation
+- OU parameter recovery from exact AR(1) transitions
+- weighted and relative RMSE diagnostics
+- parameter-bound validation
+- Heston price-surface RMSE diagnostics
+- common-seed Heston Monte Carlo price surfaces
 
-### Stochastic volatility
+### Multivariate and factor modelling
+- positive-semidefinite correlation validation
+- correlated Gaussian shock generation
+- correlated multi-asset diffusion simulation
+- PCA factor decomposition
+- explained-variance diagnostics
+- full-rank and reduced-rank reconstruction
+
+### Term-structure modelling
+The Vasicek model
+
+```text
+dr(t) = kappa(theta-r(t))dt + sigma dW(t)
+```
+
+is implemented with exact discretisation. Analytical zero-coupon bond prices are available in affine form
+
+```text
+P(0,T) = A(T) exp(-B(T) r0),
+```
+
+with continuously compounded zero-coupon yields and complete yield-curve evaluation across arbitrary maturities.
+
+### Stochastic volatility and derivatives
 The Heston simulator implements
 
 ```text
-dS(t) = mu S(t) dt + sqrt(v(t)) S(t) dW1(t)
-dv(t) = kappa(theta-v(t))dt + xi sqrt(v(t)) dW2(t)
+dS(t) = mu S(t)dt + sqrt(v(t)) S(t)dW1(t)
+dv(t) = kappa(theta-v(t))dt + xi sqrt(v(t))dW2(t)
 corr(dW1,dW2) = rho
 ```
 
-using full-truncation Euler for the variance process and log-Euler evolution for prices. The package also exposes the Feller margin
+with full-truncation variance dynamics. The package now also includes European-call Monte Carlo pricing, strike/maturity Heston price surfaces and calibration-loss diagnostics. In the low vol-of-vol limit, Heston Monte Carlo is explicitly tested against Black-Scholes behaviour.
 
-```text
-2*kappa*theta - xi^2
-```
-
-so parameter sets can be checked explicitly rather than treated as black boxes.
-
-### Regime switching
-Finite-state Markov chains can be simulated from a row-stochastic transition matrix. The package computes stationary distributions and supports Gaussian returns whose conditional mean and volatility depend on the latent regime. This makes it possible to model calm/stress states and study persistence, long-run regime occupancy and volatility mixtures.
+### Risk applications
+- empirical Value at Risk
+- Expected Shortfall
+- drawdown paths
+- maximum drawdown
+- regime-dependent return simulation
+- option-pricing uncertainty through Monte Carlo standard errors
 
 ## Validation philosophy
 
-Simulation output is checked against known theoretical properties wherever possible. The test suite verifies, among other things:
+The repository is designed around theory-versus-computation checks rather than visual output alone. The automated test suite includes checks for:
 
 - Brownian terminal mean and variance
-- GBM expected terminal value and positivity
-- OU convergence toward its long-run mean
-- CIR non-negativity under full truncation
-- Poisson terminal mean against lambda x time
-- compound-Poisson theoretical mean
-- Merton jump-diffusion expected growth under the compensator
-- Milstein's stronger pathwise convergence behaviour relative to Euler on GBM
-- control-variate variance reduction
-- importance-sampling agreement with the analytical Gaussian tail
-- material standard-error reduction for a rare-event estimator
-- Sobol point bounds and transformed-normal moments
-- quasi-Monte Carlo integration against an analytical polynomial integral
-- GBM parameter recovery from simulated data
-- OU parameter-estimation sanity checks
-- Heston price positivity and non-negative variance paths
-- Feller-condition diagnostics
-- Markov-chain stationary-distribution consistency
-- long-run regime frequencies versus stationary probabilities
-- regime-dependent volatility separation
-- calibration-loss behaviour
-- reproducibility of numerical SDE schemes
-
-The aim is therefore not just to produce simulated paths, but to demonstrate whether an implementation behaves consistently with its mathematical specification.
+- target correlation recovery in multivariate Brownian motion
+- GBM expected value and positivity
+- correlated GBM dimensional consistency
+- OU mean reversion and parameter-estimation sanity
+- CIR non-negativity
+- Poisson and compound-Poisson theoretical moments
+- Merton jump-diffusion expected growth
+- Euler/Milstein convergence behaviour
+- importance-sampling agreement with analytical Gaussian tails
+- standard-error reduction from variance-reduction techniques
+- Sobol point properties and QMC integration accuracy
+- Heston variance non-negativity and Feller diagnostics
+- Heston pricing consistency with Black-Scholes in an appropriate limiting case
+- Markov stationary-distribution consistency and long-run regime frequencies
+- PCA reconstruction and covariance-explained diagnostics
+- Vasicek exact-discretisation long-run behaviour
+- Vasicek analytical bond-price and yield identities
 
 ## Mathematical examples
 
-For standard Brownian motion,
+### Brownian motion
 
 ```text
-W(t) - W(s) ~ Normal(0, t-s)
+W(t)-W(s) ~ Normal(0,t-s)
 ```
 
-For geometric Brownian motion,
+### Geometric Brownian motion
 
 ```text
-dS(t) = mu S(t) dt + sigma S(t) dW(t)
+dS(t) = mu S(t)dt + sigma S(t)dW(t)
+S(t) = S(0) exp[(mu-0.5 sigma^2)t + sigma W(t)]
 ```
 
-with exact solution
+### Merton jump diffusion
 
 ```text
-S(t) = S(0) exp[(mu - 0.5 sigma^2)t + sigma W(t)].
+dS(t)/S(t-) = (mu-lambda*kappa_J)dt + sigma dW(t) + (J-1)dN(t)
 ```
 
-The Euler-Maruyama approximation to a scalar SDE
+### OU exact transition
 
 ```text
-dX(t) = a(t,X)dt + b(t,X)dW(t)
+phi = exp(-kappa*dt)
+X(t+dt) = theta + phi[X(t)-theta] + epsilon
 ```
 
-is
+### PCA factor representation
 
 ```text
-X[n+1] = X[n] + a(t[n],X[n]) dt + b(t[n],X[n]) dW[n].
+X_centered = Scores @ Loadings.T + residual
 ```
 
-Milstein adds the first diffusion-derivative correction. For GBM this raises the expected strong order from approximately 1/2 to approximately 1 under regularity conditions.
-
-For Merton jump diffusion,
-
-```text
-dS(t)/S(t-) = (mu - lambda*kappa)dt + sigma dW(t) + (J-1)dN(t),
-```
-
-where `N(t)` is Poisson and `kappa = E[J-1]` compensates the jump drift.
-
-For a rare Gaussian event `P[Z > a]`, importance sampling draws under a shifted law and applies the likelihood ratio
-
-```text
-L(x) = exp(-theta*x + 0.5*theta^2).
-```
-
-For quasi-Monte Carlo, low-discrepancy Sobol points replace independent uniforms; randomised scrambles permit repeated estimates and a practical standard-error calculation.
-
-For an OU process sampled every `dt`, the exact transition can be written as an AR(1) model with
-
-```text
-phi = exp(-kappa*dt),
-```
-
-which permits transparent estimation of mean reversion, long-run mean and diffusion scale.
+The leading eigenvectors of the sample covariance matrix define orthogonal statistical factors, while the cumulative leading eigenvalues quantify covariance variation explained.
 
 ## Installation
 
@@ -164,23 +159,7 @@ pytest
 
 ## Examples
 
-### Simulate GBM
-
-```python
-from stochastic_lab import geometric_brownian_motion
-
-_, paths = geometric_brownian_motion(
-    s0=100.0,
-    mu=0.05,
-    sigma=0.20,
-    horizon=1.0,
-    steps=252,
-    paths=10_000,
-    seed=42,
-)
-```
-
-### Estimate numerical strong convergence
+### Strong SDE convergence
 
 ```python
 from stochastic_lab import gbm_strong_errors
@@ -193,7 +172,7 @@ h, errors, order = gbm_strong_errors(
 print(order)
 ```
 
-### Estimate a rare 4-sigma event
+### Rare-event importance sampling
 
 ```python
 from stochastic_lab import normal_tail_probability_importance_sampling
@@ -203,108 +182,117 @@ estimate, se = normal_tail_probability_importance_sampling(
     simulations=200_000,
     seed=1,
 )
-print(estimate, se)
 ```
 
-### Randomised quasi-Monte Carlo integration
+### Correlated Brownian motion
 
 ```python
-from stochastic_lab import qmc_integrate
+import numpy as np
+from stochastic_lab import correlated_brownian_motion
 
-estimate, se = qmc_integrate(
-    lambda u: u[:, 0] ** 2 + u[:, 1] ** 2,
-    dimension=2,
-    power=10,
-    replications=8,
-    seed=123,
+corr = np.array([[1.0, 0.7], [0.7, 1.0]])
+_, paths = correlated_brownian_motion(corr, paths=10_000, seed=42)
+```
+
+### PCA factor decomposition
+
+```python
+from stochastic_lab import pca_factor_decomposition, covariance_explained
+
+fit = pca_factor_decomposition(data, n_components=3)
+print(covariance_explained(fit["eigenvalues"], 3))
+```
+
+### Vasicek yield curve
+
+```python
+import numpy as np
+from stochastic_lab import vasicek_yield_curve
+
+maturities = np.array([0.25, 0.5, 1.0, 2.0, 5.0, 10.0])
+yields = vasicek_yield_curve(
+    short_rate=0.03,
+    maturities=maturities,
+    kappa=1.2,
+    theta=0.045,
+    sigma=0.012,
 )
 ```
 
-### Simulate Heston stochastic volatility
+### Heston option pricing
 
 ```python
-from stochastic_lab import heston_paths
+from stochastic_lab import heston_european_call_mc
 
-_, prices, variances = heston_paths(
+price, se = heston_european_call_mc(
     s0=100.0,
+    strike=100.0,
+    rate=0.02,
+    maturity=1.0,
     v0=0.04,
-    mu=0.05,
     kappa=2.0,
     theta=0.04,
     xi=0.30,
     rho=-0.7,
-    horizon=1.0,
-    steps=252,
-    paths=10_000,
+    paths=50_000,
     seed=7,
 )
 ```
-
-### Model calm and stress regimes
-
-```python
-import numpy as np
-from stochastic_lab import markov_switching_returns, stationary_distribution
-
-transition = np.array([[0.97, 0.03], [0.10, 0.90]])
-print(stationary_distribution(transition))
-
-states, returns = markov_switching_returns(
-    transition,
-    means=np.array([0.0004, -0.0008]),
-    volatilities=np.array([0.008, 0.03]),
-    steps=5_000,
-    seed=42,
-)
-```
-
-A runnable end-to-end demonstration is available at `experiments/advanced_models_demo.py`.
 
 ## Repository structure
 
 ```text
 src/stochastic_lab/
-    processes.py          diffusion and counting processes
+    processes.py          core diffusion and counting processes
     schemes.py            Euler-Maruyama and Milstein
-    convergence.py        strong/weak error and convergence diagnostics
+    convergence.py        strong/weak convergence diagnostics
     jumps.py              compound Poisson and Merton jump diffusion
     monte_carlo.py        estimators and variance reduction
-    rare_events.py        importance sampling and tail-event estimation
-    qmc.py                Sobol low-discrepancy and randomised QMC tools
-    estimation.py         GBM and OU parameter estimation
-    calibration.py        fit metrics and parameter diagnostics
+    rare_events.py        importance sampling
+    qmc.py                Sobol and randomised QMC
+    estimation.py         GBM and OU estimation
+    calibration.py        fit diagnostics and parameter checks
     heston.py             stochastic-volatility simulation
-    regime_switching.py   latent Markov regimes and switching returns
-experiments/              reproducible research-style demonstrations
+    heston_pricing.py     Heston MC pricing and calibration losses
+    regime_switching.py   Markov regimes and state-dependent returns
+    multivariate.py       correlated stochastic processes
+    factor_models.py      PCA factor decomposition
+    term_structure.py     Vasicek short rates, bond prices and yields
+    pricing.py            option-pricing applications
+    risk.py               VaR, ES and drawdown analytics
+experiments/
+    advanced_models_demo.py
+    factor_term_structure_demo.py
 tests/                    statistical and numerical verification
-.github/workflows/        automated CI across supported Python versions
+.github/workflows/        CI across Python 3.10-3.12
 ```
 
 ## Development roadmap
 
-1. **Foundations** — Brownian motion, GBM, OU, CIR and Poisson processes. ✅
-2. **Numerical SDE analysis** — Euler-Maruyama, Milstein, strong and weak convergence. ✅
+1. **Foundations** — Brownian motion, GBM, OU, CIR and Poisson. ✅
+2. **Numerical SDE analysis** — Euler-Maruyama, Milstein, strong/weak convergence. ✅
 3. **Jump processes** — compound Poisson and Merton jump diffusion. ✅
-4. **Variance reduction** — antithetic variates and control variates. ✅
-5. **Importance sampling** — rare-event estimators and likelihood-ratio diagnostics. ✅
-6. **Quasi-Monte Carlo** — Sobol sequences and randomised QMC integration. ✅
-7. **Parameter estimation** — GBM MLE, OU transition estimation and calibration diagnostics. ✅ Core implemented
-8. **Stochastic volatility** — Heston simulation, Feller diagnostics and variance-path analysis. ✅ Core implemented
-9. **Regime switching** — Markov switching processes, stationary distributions and state-dependent returns. ✅ Core implemented
-10. **Applications** — derivative pricing, risk simulation and term-structure modelling. Next
-11. **Research experiments** — reproducible comparisons of simulation bias, convergence, estimation error and model behaviour. In progress
+4. **Variance reduction** — antithetic and control variates. ✅
+5. **Importance sampling** — rare-event estimators. ✅
+6. **Quasi-Monte Carlo** — Sobol and randomised QMC. ✅
+7. **Parameter estimation** — GBM MLE and OU estimation. ✅
+8. **Stochastic volatility** — Heston simulation and diagnostics. ✅
+9. **Regime switching** — Markov state processes and switching returns. ✅
+10. **Applications** — pricing, risk, term structure, multivariate simulation and factor modelling. ✅ Core implemented
+11. **Research experiments** — controlled comparisons of convergence, parameter recovery, factor compression and model behaviour. 🚧 Active
+12. **Advanced extensions** — Brownian bridge/QMC path construction, CIR bond pricing, multi-factor rates, Heston Fourier pricing and richer calibration workflows. Planned
 
 ## Design principles
 
 - mathematical transparency over black-box output;
-- deterministic reproducibility through explicit random seeds;
-- reusable library code rather than notebook-only implementations;
-- theory-versus-simulation validation;
-- convergence analysis rather than visual inspection alone;
-- explicit estimation and calibration diagnostics;
-- tests for numerical and statistical behaviour;
+- explicit random seeds and reproducibility;
+- reusable package code rather than notebook-only implementations;
+- analytical benchmarks wherever available;
+- numerical convergence and estimation diagnostics;
+- uncertainty reporting through standard errors;
+- testable model assumptions and parameter constraints;
 - documented approximations and limitations.
 
 ## Disclaimer
 
-This repository is an independent educational and research project. It is not financial or investment advice and its models should not be used for production decisions without appropriate validation, governance and controls.
+This repository is an independent educational and research project. It is not financial or investment advice, and its models should not be used for production decisions without appropriate validation, governance and controls.
