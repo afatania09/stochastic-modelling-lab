@@ -4,7 +4,6 @@ import pytest
 
 from stochastic_lab.weak_heston import weak_spot_residual
 
-
 PARAMS = {"rate": 0.03, "kappa": 2.0, "theta": 0.04, "xi": 0.3, "rho": -0.6}
 
 
