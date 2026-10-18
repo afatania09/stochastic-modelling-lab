@@ -6,6 +6,7 @@ manufactured functions before weak residuals are used in training.
 from __future__ import annotations
 
 from collections.abc import Callable
+from itertools import pairwise
 
 import numpy as np
 from numpy.polynomial.legendre import leggauss
@@ -41,7 +42,7 @@ def refinement_table(
     Successive agreement is a diagnostic, not proof of convergence.
     """
     if not orders or any(order < 1 for order in orders) or any(
-        b <= a for a, b in zip(orders, orders[1:])
+        b <= a for a, b in pairwise(orders)
     ):
         raise ValueError("orders must be strictly increasing positive integers")
     rows: list[dict[str, float | int | None]] = []
