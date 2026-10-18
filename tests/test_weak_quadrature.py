@@ -8,7 +8,7 @@ from stochastic_lab.weak_quadrature import gauss_legendre_integral, refinement_t
 def test_polynomial_exactness():
     # An n-point Gauss-Legendre rule integrates polynomials up to degree 2n-1.
     for order in (2, 4, 12):
-        result = gauss_legendre_integral(lambda x: x ** (2 * order - 2), -1, 1, order)
+        result = gauss_legendre_integral(lambda x, exponent=2 * order - 2: x ** exponent, -1, 1, order)
         assert result == pytest.approx(2 / (2 * order - 1), abs=1e-12)
 
 
