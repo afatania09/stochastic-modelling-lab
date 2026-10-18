@@ -16,15 +16,15 @@ def fields(s, v):
             "dv": s**2 + 2 * s * v}
 
 
-def test_function(s, v):
+def weight_function(s, v):
     return 1 + s / 100 + 2 * v
 
 
-def test_ds(s, v):
+def weight_ds(s, v):
     return np.ones_like(s) / 100
 
 
-def test_dv(s, v):
+def weight_dv(s, v):
     return np.full_like(s, 2.0)
 
 
@@ -33,8 +33,8 @@ def test_dv(s, v):
 def test_weak_2d_equals_direct_strong_integral(lower_variance, order):
     weak = weak_heston_2d(
         spot_bounds=(80, 120), variance_bounds=(lower_variance, 0.2),
-        order=order, fields=fields, test=test_function,
-        test_ds=test_ds, test_dv=test_dv, **PARAMS
+        order=order, fields=fields, test=weight_function,
+        weight_ds=weight_ds, weight_dv=weight_dv, **PARAMS
     )
     # Independent direct strong-form integral, using polynomial derivatives.
     from numpy.polynomial.legendre import leggauss
@@ -50,7 +50,7 @@ def test_weak_2d_equals_direct_strong_integral(lower_variance, order):
         dsv=2 * ss + 2 * vv, dvv=2 * ss, **PARAMS
     )
     direct = np.sum(weights[:, None] * weights[None, :]
-                    * strong * test_function(ss, vv))
+                    * strong * weight_function(ss, vv))
     direct *= 20 * (0.2 - lower_variance) / 2
     assert weak == pytest.approx(direct, rel=1e-11, abs=1e-8)
 
@@ -59,6 +59,6 @@ def test_invalid_domain():
     with pytest.raises(ValueError):
         weak_heston_2d(
             spot_bounds=(0, 120), variance_bounds=(0, 0.2),
-            order=12, fields=fields, test=test_function,
-            test_ds=test_ds, test_dv=test_dv, **PARAMS
+            order=12, fields=fields, test=weight_function,
+            weight_ds=weight_ds, weight_dv=weight_dv, **PARAMS
         )
