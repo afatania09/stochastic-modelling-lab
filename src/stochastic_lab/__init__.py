@@ -31,7 +31,13 @@ from .processes import (
     ornstein_uhlenbeck,
     poisson_process,
 )
-from .qmc import qmc_integrate, sobol_normal, sobol_uniform
+from .qmc import (
+    brownian_bridge_from_normals,
+    qmc_integrate,
+    sobol_brownian_bridge,
+    sobol_normal,
+    sobol_uniform,
+)
 from .rare_events import (
     lognormal_loss_exceedance_importance_sampling,
     normal_tail_probability_importance_sampling,
@@ -46,6 +52,8 @@ from .regime_switching import (
 from .risk import drawdown, expected_shortfall, maximum_drawdown, value_at_risk
 from .schemes import euler_maruyama, milstein
 from .term_structure import (
+    cir_yield_curve,
+    cir_zero_coupon_bond_price,
     vasicek_paths,
     vasicek_yield_curve,
     vasicek_zero_coupon_bond_price,
@@ -55,8 +63,11 @@ from .term_structure import (
 __all__ = [
     "antithetic_normal_samples",
     "black_scholes_call",
+    "brownian_bridge_from_normals",
     "brownian_motion",
     "cir_process",
+    "cir_yield_curve",
+    "cir_zero_coupon_bond_price",
     "compound_poisson_process",
     "control_variate_estimate",
     "correlated_brownian_motion",
@@ -98,6 +109,7 @@ __all__ = [
     "relative_rmse",
     "running_mean_standard_error",
     "simulate_markov_chain",
+    "sobol_brownian_bridge",
     "sobol_normal",
     "sobol_uniform",
     "stationary_distribution",
