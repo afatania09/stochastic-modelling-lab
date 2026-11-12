@@ -20,6 +20,7 @@ This repository is built as a reusable, testable stochastic-modelling library ra
 - Heston stochastic volatility
 - finite-state Markov regime switching
 - Vasicek short-rate dynamics
+- CIR analytical zero-coupon bond and yield-curve pricing
 
 ### Numerical SDE methods
 - Euler-Maruyama
@@ -37,6 +38,7 @@ This repository is built as a reusable, testable stochastic-modelling library ra
 - importance sampling for rare events
 - Sobol low-discrepancy sequences
 - randomised quasi-Monte Carlo
+- Brownian-bridge Sobol path construction for path-dependent simulation
 
 ### Estimation and calibration
 - GBM maximum-likelihood estimation
@@ -110,6 +112,8 @@ The repository is designed around theory-versus-computation checks rather than v
 - PCA reconstruction and covariance-explained diagnostics
 - Vasicek exact-discretisation long-run behaviour
 - Vasicek analytical bond-price and yield identities
+- CIR analytical bond-price boundary and deterministic zero-volatility limit
+- Brownian-bridge covariance recovery and Sobol path-moment checks
 
 ## Mathematical examples
 
@@ -219,6 +223,37 @@ yields = vasicek_yield_curve(
 )
 ```
 
+### CIR yield curve
+
+```python
+import numpy as np
+from stochastic_lab import cir_yield_curve
+
+maturities = np.array([0.25, 0.5, 1.0, 2.0, 5.0, 10.0])
+yields = cir_yield_curve(
+    short_rate=0.03,
+    maturities=maturities,
+    kappa=1.5,
+    theta=0.045,
+    sigma=0.12,
+)
+```
+
+### Brownian-bridge Sobol paths
+
+```python
+from stochastic_lab import sobol_brownian_bridge
+
+time, paths = sobol_brownian_bridge(
+    steps=32,
+    power=12,
+    horizon=1.0,
+    seed=42,
+)
+```
+
+A reproducible Asian-option comparison of pseudo-random Monte Carlo, forward Sobol QMC and Brownian-bridge Sobol QMC is available at `experiments/qmc_brownian_bridge_demo.py`.
+
 ### Heston option pricing
 
 ```python
@@ -257,12 +292,14 @@ src/stochastic_lab/
     regime_switching.py   Markov regimes and state-dependent returns
     multivariate.py       correlated stochastic processes
     factor_models.py      PCA factor decomposition
+    qmc.py                Sobol QMC and Brownian-bridge path construction
     term_structure.py     Vasicek short rates, bond prices and yields
     pricing.py            option-pricing applications
     risk.py               VaR, ES and drawdown analytics
 experiments/
     advanced_models_demo.py
     factor_term_structure_demo.py
+    qmc_brownian_bridge_demo.py
 tests/                    statistical and numerical verification
 .github/workflows/        CI across Python 3.10-3.12
 ```
@@ -280,7 +317,7 @@ tests/                    statistical and numerical verification
 9. **Regime switching** — Markov state processes and switching returns. ✅
 10. **Applications** — pricing, risk, term structure, multivariate simulation and factor modelling. ✅ Core implemented
 11. **Research experiments** — controlled comparisons of convergence, parameter recovery, factor compression and model behaviour. 🚧 Active
-12. **Advanced extensions** — Brownian bridge/QMC path construction, CIR bond pricing, multi-factor rates, Heston Fourier pricing and richer calibration workflows. Planned
+12. **Advanced extensions** — Brownian bridge/QMC path construction and CIR bond pricing ✅; multi-factor rates, Heston Fourier pricing and richer calibration workflows planned
 
 ## Design principles
 

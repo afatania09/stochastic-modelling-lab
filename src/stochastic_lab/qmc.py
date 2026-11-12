@@ -33,6 +33,75 @@ def sobol_normal(
     return norm.ppf(np.clip(uniforms, clip, 1.0 - clip))
 
 
+def brownian_bridge_from_normals(
+    normals: np.ndarray,
+    horizon: float = 1.0,
+) -> np.ndarray:
+    """Construct Brownian paths from independent normals using a bridge ordering.
+
+    The first normal determines the terminal value W(T). Subsequent normals
+    recursively fill conditional midpoints. This concentrates the largest
+    path variance in the earliest coordinates, which is useful with
+    low-discrepancy sequences.
+    """
+    z = np.asarray(normals, dtype=float)
+    if z.ndim != 2 or z.shape[1] < 1:
+        raise ValueError("normals must have shape (paths, steps) with steps >= 1")
+    if horizon <= 0:
+        raise ValueError("horizon must be positive")
+
+    paths, steps = z.shape
+    time = np.linspace(0.0, horizon, steps + 1)
+    values = np.empty((paths, steps + 1), dtype=float)
+    values[:, 0] = 0.0
+    values[:, steps] = np.sqrt(horizon) * z[:, 0]
+
+    intervals: list[tuple[int, int]] = [(0, steps)]
+    normal_index = 1
+    while intervals:
+        left, right = intervals.pop(0)
+        if right - left <= 1:
+            continue
+
+        middle = (left + right) // 2
+        t_left, t_middle, t_right = time[left], time[middle], time[right]
+        span = t_right - t_left
+        left_weight = (t_right - t_middle) / span
+        right_weight = (t_middle - t_left) / span
+        conditional_mean = left_weight * values[:, left] + right_weight * values[:, right]
+        conditional_variance = (t_middle - t_left) * (t_right - t_middle) / span
+        values[:, middle] = (
+            conditional_mean + np.sqrt(conditional_variance) * z[:, normal_index]
+        )
+        normal_index += 1
+        intervals.append((left, middle))
+        intervals.append((middle, right))
+
+    if normal_index != steps:
+        raise RuntimeError("Brownian bridge did not consume the expected number of normals")
+    return values
+
+
+def sobol_brownian_bridge(
+    steps: int,
+    power: int,
+    horizon: float = 1.0,
+    scramble: bool = True,
+    seed: int | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Generate Brownian paths using Sobol normals and Brownian-bridge ordering."""
+    if steps <= 0:
+        raise ValueError("steps must be positive")
+    normals = sobol_normal(
+        dimension=steps,
+        power=power,
+        scramble=scramble,
+        seed=seed,
+    )
+    paths = brownian_bridge_from_normals(normals, horizon=horizon)
+    return np.linspace(0.0, horizon, steps + 1), paths
+
+
 def qmc_integrate(
     integrand,
     dimension: int,
