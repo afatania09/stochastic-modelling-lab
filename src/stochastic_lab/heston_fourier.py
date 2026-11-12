@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.integrate import quad
-from scipy.stats import norm
 
 
 def heston_characteristic_function(
